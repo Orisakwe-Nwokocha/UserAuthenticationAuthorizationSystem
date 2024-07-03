@@ -1,15 +1,12 @@
 package com.prunny.jwt_project.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prunny.jwt_project.dto.requests.LoginRequest;
 import com.prunny.jwt_project.dto.requests.RegisterRequest;
-import com.prunny.jwt_project.utils.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -48,6 +45,19 @@ class AuthControllerTest {
                         .contentType(APPLICATION_JSON)
                         .content(content))
                 .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    public void authenticateUserTest_FailsForInvalidCredentials() throws Exception {
+        LoginRequest request = new LoginRequest();
+        request.setUsername("user");
+        request.setPassword("wrongPassword");
+        byte[] content = new ObjectMapper().writeValueAsBytes(request);
+        mockMvc.perform(post("/api/v1/auth")
+                        .contentType(APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isUnauthorized())
                 .andDo(print());
     }
 }
