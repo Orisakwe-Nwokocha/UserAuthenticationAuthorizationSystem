@@ -12,6 +12,7 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +32,7 @@ import static java.time.temporal.ChronoUnit.HOURS;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @AllArgsConstructor
+@Slf4j
 public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -42,6 +44,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
     public Authentication attemptAuthentication(HttpServletRequest request,
                                                 HttpServletResponse response)
             throws AuthenticationException {
+        log.info("Starting user authentication");
         LoginRequest loginRequest;
         try {
             InputStream inputStream = request.getInputStream();
@@ -54,6 +57,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         Authentication authentication = new UsernamePasswordAuthenticationToken(username, password);
         Authentication authResult = authenticationManager.authenticate(authentication);
         SecurityContextHolder.getContext().setAuthentication(authResult);
+        log.info("Retrieved the authentication result from authentication manager");
         return  authResult;
     }
 
@@ -70,6 +74,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
                 new ApiResponse<>(now(), true, loginResponse);
         response.getOutputStream().write(mapper.writeValueAsBytes(apiResponse));
         response.flushBuffer();
+        log.info("User authentication successful");
         chain.doFilter(request, response);
     }
 
@@ -111,6 +116,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         response.getOutputStream()
                 .write(mapper.writeValueAsBytes(errorResponse));
         response.flushBuffer();
+        log.info("User authentication unsuccessful");
     }
 
 }

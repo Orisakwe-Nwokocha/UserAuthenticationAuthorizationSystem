@@ -10,6 +10,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,6 +28,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     private final RsaKeyProperties rsaKeys;
 
@@ -34,11 +36,15 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        log.info("Starting authorization");
         String requestPath = request.getServletPath();
         boolean isRequestPathPublic = PUBLIC_ENDPOINTS.contains(requestPath);
         if (isRequestPathPublic) filterChain.doFilter(request, response);
         String authorizationHeader = request.getHeader(AUTHORIZATION);
-        if (authorizationHeader != null) doAuthorization(authorizationHeader);
+        if (authorizationHeader != null) {
+            log.info("Authorization not needed for public endpoint: {}", requestPath);
+            doAuthorization(authorizationHeader);
+        }
         filterChain.doFilter(request, response);
     }
 
@@ -58,5 +64,6 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
         String credentials = decodedJWT.getClaim("credentials").asString();
         Authentication authentication = new UsernamePasswordAuthenticationToken(principal, credentials, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        log.info("User authorization succeeded");
     }
 }
