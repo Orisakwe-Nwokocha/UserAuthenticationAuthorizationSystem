@@ -42,7 +42,7 @@ authorization mechanisms. The detailed implementation of each class can be found
   - 201 Created
 
 #### Login
-- URL: `/api/v1/auth`
+- URL: `/api/v1/auth/login`
 - Method: POST 
 - Description: Authenticates a user and returns a JWT token. 
 - Request Body:

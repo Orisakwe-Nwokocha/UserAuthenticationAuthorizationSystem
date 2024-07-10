@@ -74,7 +74,7 @@ class UserControllerTest {
         request.setPassword("password");
         ObjectMapper objectMapper = new ObjectMapper();
         byte[] content = objectMapper.writeValueAsBytes(request);
-        MvcResult result = mockMvc.perform(post("/api/v1/auth")
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                                             .contentType(APPLICATION_JSON)
                                             .content(content))
                                     .andExpect(status().isOk())

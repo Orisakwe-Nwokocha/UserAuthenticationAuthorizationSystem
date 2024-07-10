@@ -26,7 +26,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         var authenticationFilter = new CustomUsernamePasswordAuthenticationFilter(authenticationManager, rsaKeys);
-        authenticationFilter.setFilterProcessesUrl("/api/v1/auth");
+        authenticationFilter.setFilterProcessesUrl("/api/v1/auth/login");
         return http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.disable())

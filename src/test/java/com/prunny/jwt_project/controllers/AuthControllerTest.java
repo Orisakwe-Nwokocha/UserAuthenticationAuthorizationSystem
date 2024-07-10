@@ -54,7 +54,7 @@ class AuthControllerTest {
         request.setUsername("user");
         request.setPassword("wrongPassword");
         byte[] content = new ObjectMapper().writeValueAsBytes(request);
-        mockMvc.perform(post("/api/v1/auth")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(APPLICATION_JSON)
                         .content(content))
                 .andExpect(status().isUnauthorized())
