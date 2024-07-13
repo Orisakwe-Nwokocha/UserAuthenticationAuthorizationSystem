@@ -27,9 +27,10 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.Collection;
 
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import static java.time.LocalDateTime.now;
 import static java.time.temporal.ChronoUnit.HOURS;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @AllArgsConstructor
 @Slf4j
@@ -72,6 +73,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         loginResponse.setMessage("Authentication succeeded");
         ApiResponse<LoginResponse> apiResponse =
                 new ApiResponse<>(now(), true, loginResponse);
+        response.setContentType(APPLICATION_JSON_VALUE);
         response.getOutputStream().write(mapper.writeValueAsBytes(apiResponse));
         response.flushBuffer();
         log.info("User authentication successful");
@@ -79,7 +81,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
     }
 
     private String generateAccessToken(Authentication authResult) {
-        Algorithm algorithm = Algorithm.RSA256(rsaKeys.publicKey(), rsaKeys.privateKey());
+        Algorithm algorithm = Algorithm.RSA512(rsaKeys.publicKey(), rsaKeys.privateKey());
         Instant now = Instant.now();
         return JWT.create()
                 .withIssuer("jwt-project")
@@ -99,7 +101,6 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
                 .toArray(String[]::new);
     }
 
-
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request,
                                               HttpServletResponse response,
@@ -112,9 +113,9 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
                 .message(exception.getMessage())
                 .path(request.getRequestURI())
                 .build();
-        response.setStatus(UNAUTHORIZED.value());
-        response.getOutputStream()
-                .write(mapper.writeValueAsBytes(errorResponse));
+        response.sendError(SC_UNAUTHORIZED, "Unauthorized");
+        response.setContentType(APPLICATION_JSON_VALUE);
+        response.getOutputStream().write(mapper.writeValueAsBytes(errorResponse));
         response.flushBuffer();
         log.info("User authentication unsuccessful");
     }

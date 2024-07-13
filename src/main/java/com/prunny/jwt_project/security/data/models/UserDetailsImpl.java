@@ -1,4 +1,4 @@
-package com.prunny.jwt_project.security.models;
+package com.prunny.jwt_project.security.data.models;
 
 import com.prunny.jwt_project.data.models.User;
 import lombok.AllArgsConstructor;

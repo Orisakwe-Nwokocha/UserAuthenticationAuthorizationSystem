@@ -55,7 +55,7 @@ class UserControllerTest {
     void greetAdminTest() throws Exception {
         mockMvc.perform(get("/api/v1/user/admin"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Hello, user"))
+                .andExpect(content().string("Hello, admin"))
                 .andDo(print());
     }
 
@@ -68,7 +68,7 @@ class UserControllerTest {
                 .andDo(print());
     }
 
-    public String getToken(String username) throws Exception {
+    private String getToken(String username) throws Exception {
         LoginRequest request = new LoginRequest();
         request.setUsername(username);
         request.setPassword("password");

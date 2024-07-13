@@ -5,6 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.prunny.jwt_project.security.config.RsaKeyProperties;
+import com.prunny.jwt_project.security.services.AuthService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,33 +25,52 @@ import java.util.List;
 
 import static com.prunny.jwt_project.security.utils.SecurityUtils.JWT_PREFIX;
 import static com.prunny.jwt_project.security.utils.SecurityUtils.PUBLIC_ENDPOINTS;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Component
 @AllArgsConstructor
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     private final RsaKeyProperties rsaKeys;
+    private final AuthService authService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         log.info("Starting authorization");
-        String requestPath = request.getServletPath();
+        String requestPath = request.getRequestURI();
         boolean isRequestPathPublic = PUBLIC_ENDPOINTS.contains(requestPath);
-        if (isRequestPathPublic) filterChain.doFilter(request, response);
+        if (isRequestPathPublic) {
+            log.info("Authorization not needed for public endpoint: {}", requestPath);
+            filterChain.doFilter(request, response);
+            return;
+        }
         String authorizationHeader = request.getHeader(AUTHORIZATION);
         if (authorizationHeader != null) {
-            log.info("Authorization not needed for public endpoint: {}", requestPath);
-            doAuthorization(authorizationHeader);
+            String token = authorizationHeader.substring(JWT_PREFIX.length()).strip();
+            if (isTokenBlacklisted(response, token)) return;
+            doAuthorization(token);
         }
         filterChain.doFilter(request, response);
     }
 
-    private void doAuthorization(String authorizationHeader) {
-        String token = authorizationHeader.substring(JWT_PREFIX.length()).strip();
-        Algorithm algorithm = Algorithm.RSA256(rsaKeys.publicKey(), rsaKeys.privateKey());
+    private boolean isTokenBlacklisted(HttpServletResponse response, String token) throws IOException {
+        if (authService.isTokenBlacklisted(token)) {
+            log.warn("Token is blacklisted: {}", token);
+            response.sendError(SC_UNAUTHORIZED, "Unauthorized");
+            response.setContentType(APPLICATION_JSON_VALUE);
+            response.getWriter().write("{\"error\": \"Token is expired or invalid\"}");
+            response.getWriter().flush();
+            return true;
+        }
+        return false;
+    }
+
+    private void doAuthorization(String token) {
+        Algorithm algorithm = Algorithm.RSA512(rsaKeys.publicKey(), rsaKeys.privateKey());
         JWTVerifier jwtVerifier = JWT.require(algorithm)
                 .withIssuer("jwt-project")
                 .withClaimPresence("roles")

@@ -6,14 +6,18 @@ import com.prunny.jwt_project.dto.requests.RegisterRequest;
 import com.prunny.jwt_project.dto.responses.ApiResponse;
 import com.prunny.jwt_project.dto.responses.RegisterResponse;
 import com.prunny.jwt_project.exceptions.UsernameExistsException;
+import com.prunny.jwt_project.security.data.models.BlacklistedToken;
+import com.prunny.jwt_project.security.data.repositories.BlacklistedTokenRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.HashSet;
 
 import static java.time.LocalDateTime.now;
+import static java.time.temporal.ChronoUnit.HOURS;
 
 @Service
 @Slf4j
@@ -23,6 +27,8 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
 
     private final ModelMapper mapper;
+
+    private final BlacklistedTokenRepository blacklistedTokenRepository;
 
     @Override
     public ApiResponse<RegisterResponse> register(RegisterRequest request) {
@@ -35,6 +41,33 @@ public class AuthServiceImpl implements AuthService {
         registerResponse.setMessage("User registered successfully");
         log.info("{} user registered successfully", request.getRole());
         return new ApiResponse<>(now(), true, registerResponse);
+    }
+
+    @Override
+    public void blacklist(String token) {
+        log.info("Trying to blacklist token: {}", token);
+        trackExpiredTokens();
+        BlacklistedToken blacklistedToken = new BlacklistedToken();
+        blacklistedToken.setToken(token);
+        blacklistedToken.setExpiresAt(Instant.now().plus(1, HOURS));
+        blacklistedTokenRepository.save(blacklistedToken);
+        log.info("Blacklisted token: {}", token);
+    }
+
+    @Override
+    public boolean isTokenBlacklisted(String token) {
+        log.info("Checking blacklist status of token: {}", token);
+        boolean isBlacklisted = blacklistedTokenRepository.existsByToken(token);
+        log.info("Blacklist status of token: {}", isBlacklisted);
+        trackExpiredTokens();
+        return isBlacklisted;
+    }
+
+    private void trackExpiredTokens() {
+        var blacklist = blacklistedTokenRepository.findAll();
+        blacklist.stream()
+                .filter(blacklistedToken -> Instant.now().isAfter(blacklistedToken.getExpiresAt()))
+                .forEach(blacklistedTokenRepository::delete);
     }
 
     private User registerNewUser(RegisterRequest request) {

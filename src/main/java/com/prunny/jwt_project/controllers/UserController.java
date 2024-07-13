@@ -16,7 +16,7 @@ public class UserController {
     }
 
     @GetMapping("/admin")
-    public String greetAdmin(Principal principal) {
-        return "Hello, " + principal.getName();
+    public String greetAdmin() {
+        return "Hello, admin";
     }
 }
