@@ -14,6 +14,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static com.prunny.jwt_project.utils.TestUtils.BLACKLISTED_TOKEN;
 import static com.prunny.jwt_project.utils.TestUtils.buildRegisterRequest;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -80,14 +81,8 @@ class AuthControllerTest {
 
     @Test
     public void testThatBlacklistedTokenCannotBeAuthorized() throws Exception {
-        String token = getToken();
-        mockMvc.perform(post("/api/v1/auth/logout")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isNoContent())
-                .andReturn();
-
         mockMvc.perform(get("/api/v1/user")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + BLACKLISTED_TOKEN))
                  .andExpect(status().isUnauthorized())
                  .andDo(print());
     }

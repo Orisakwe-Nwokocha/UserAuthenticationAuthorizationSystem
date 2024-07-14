@@ -61,6 +61,16 @@ authorization mechanisms. The detailed implementation of each class can be found
      }
     }
 
+#### Logout
+- URL: `/api/v1/auth/logout`
+- Method: POST 
+- Description: Blacklists a user's JWT token and returns no content. 
+- Headers:
+    - `Authorization: Bearer <token>`
+- Response:
+    - 204 No Content
+
+
 ### User Endpoints
 #### Get User Information
 - URL: `/api/v1/user`

@@ -64,10 +64,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void trackExpiredTokens() {
+        log.info("Tracking and deleting expired user tokens");
         var blacklist = blacklistedTokenRepository.findAll();
         blacklist.stream()
                 .filter(blacklistedToken -> Instant.now().isAfter(blacklistedToken.getExpiresAt()))
                 .forEach(blacklistedTokenRepository::delete);
+        log.info("Expired user tokens successfully tracked and deleted");
     }
 
     private User registerNewUser(RegisterRequest request) {

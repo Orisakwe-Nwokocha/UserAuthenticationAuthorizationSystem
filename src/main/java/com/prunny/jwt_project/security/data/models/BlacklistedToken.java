@@ -21,7 +21,7 @@ public class BlacklistedToken {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
-    @Column(nullable = false, unique = true, length = 600)
+    @Column(nullable = false, length = 600)
     private String token;
     private Instant expiresAt;
     @Setter(NONE)
