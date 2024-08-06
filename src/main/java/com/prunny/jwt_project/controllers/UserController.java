@@ -17,6 +17,6 @@ public class UserController {
 
     @GetMapping("/admin")
     public String greetAdmin() {
-        return "Hello, admin";
+        return "Hello, admin!";
     }
 }
